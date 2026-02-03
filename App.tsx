@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, ArrowRight, ShieldAlert, LogOut } from 'lucide-react';
+import { Analytics } from '@vercel/analytics/react';
 
 // --- Assets ---
 
@@ -666,6 +667,7 @@ const App: React.FC = () => {
         </div>
       </footer>
 
+      <Analytics />
     </div>
   );
 };
