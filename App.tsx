@@ -4,15 +4,16 @@
 */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { Analytics } from "@vercel/analytics/react"
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, ArrowRight, ShieldAlert, LogOut } from 'lucide-react';
 
 // --- Assets ---
 
 const LinkedInLogo = ({ className = "" }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={className} width="20" height="20">
-    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-  </svg>
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} width="20" height="20">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+    </svg>
 );
 
 // --- Custom Cursor Component ---
@@ -110,12 +111,12 @@ const CustomCursor = () => {
 
     return (
         <div className="pointer-events-none fixed inset-0 z-[100] mix-blend-difference overflow-hidden">
-            <div 
+            <div
                 ref={cursorRef}
-                className="fixed top-0 left-0 w-2 h-2 bg-white rounded-full z-[101]" 
+                className="fixed top-0 left-0 w-2 h-2 bg-white rounded-full z-[101]"
                 style={{ willChange: 'transform' }}
             />
-            <div 
+            <div
                 ref={trailerRef}
                 className="fixed top-0 left-0 w-7 h-7 border border-white rounded-full opacity-50 z-[100]"
                 style={{ willChange: 'transform' }}
@@ -321,7 +322,7 @@ const ParticleModiText = () => {
         const canvas = canvasRef.current;
         const container = containerRef.current;
         if (!canvas || !container) return;
-        
+
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (!ctx) return;
 
@@ -334,7 +335,7 @@ const ParticleModiText = () => {
             const width = container.clientWidth;
             const height = container.clientHeight;
             const dpr = Math.min(window.devicePixelRatio || 1, 2);
-            
+
             canvas.width = width * dpr;
             canvas.height = height * dpr;
             canvas.style.width = `${width}px`;
@@ -356,7 +357,7 @@ const ParticleModiText = () => {
 
             particles = [];
             // Higher density for sandy look
-            const step = 3 * dpr; 
+            const step = 3 * dpr;
 
             for (let y = 0; y < canvas.height; y += step) {
                 for (let x = 0; x < canvas.width; x += step) {
@@ -386,10 +387,10 @@ const ParticleModiText = () => {
             const rect = canvas.getBoundingClientRect();
             const mx = mouseRef.current.x - rect.left;
             const my = mouseRef.current.y - rect.top;
-            
+
             const mvx = mx - prevMouseRef.current.x;
             const mvy = my - prevMouseRef.current.y;
-            
+
             // Decay mouse velocity tracking
             mouseRef.current.vx = mvx;
             mouseRef.current.vy = mvy;
@@ -398,14 +399,14 @@ const ParticleModiText = () => {
             particles.forEach((p) => {
                 const dx = mx - p.x;
                 const dy = my - p.y;
-                const dist = Math.sqrt(dx*dx + dy*dy);
+                const dist = Math.sqrt(dx * dx + dy * dy);
                 const interactionRadius = 100;
 
                 // --- Interaction Physics ---
                 if (dist < interactionRadius) {
                     const angle = Math.atan2(dy, dx);
                     const force = (interactionRadius - dist) / interactionRadius;
-                    
+
                     // 1. Repulsion (Push away)
                     p.vx -= Math.cos(angle) * force * 1.5;
                     p.vy -= Math.sin(angle) * force * 1.5;
@@ -423,11 +424,11 @@ const ParticleModiText = () => {
                 // --- Return to Origin (Home) ---
                 const dxOrigin = p.ox - p.x;
                 const dyOrigin = p.oy - p.y;
-                
+
                 // Very gentle spring for "settle back slowly"
                 p.vx += dxOrigin * 0.015;
                 p.vy += dyOrigin * 0.015;
-                
+
                 // Damping/Friction (Sand doesn't bounce much)
                 p.vx *= 0.92;
                 p.vy *= 0.92;
@@ -476,13 +477,13 @@ const ParticleModiText = () => {
 
 const DisclaimerModal = ({ onAgree }: { onAgree: () => void }) => {
     return (
-        <motion.div 
+        <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
         >
-            <motion.div 
+            <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
@@ -497,10 +498,10 @@ const DisclaimerModal = ({ onAgree }: { onAgree: () => void }) => {
                     </div>
 
                     <h2 className="text-xl font-bold text-white mb-4">Parody Disclaimer</h2>
-                    
+
                     <p className="text-neutral-400 text-sm leading-relaxed mb-8">
-                        This is an unofficial parody/meme website created purely for entertainment purposes. 
-                        It is not affiliated with Narendra Modi, the Government of India, or any political party. 
+                        This is an unofficial parody/meme website created purely for entertainment purposes.
+                        It is not affiliated with Narendra Modi, the Government of India, or any political party.
                         All media belongs to their respective owners.
                     </p>
 
@@ -512,7 +513,7 @@ const DisclaimerModal = ({ onAgree }: { onAgree: () => void }) => {
                             <LogOut size={16} />
                             Exit
                         </button>
-                        <button 
+                        <button
                             onClick={onAgree}
                             className="flex-[2] py-3 bg-white text-black font-bold rounded-lg hover:bg-neutral-200 transition-colors flex items-center justify-center gap-2 group"
                         >
@@ -529,145 +530,148 @@ const DisclaimerModal = ({ onAgree }: { onAgree: () => void }) => {
 // --- Main App ---
 
 const App: React.FC = () => {
-  const [agreed, setAgreed] = useState(false);
+    const [agreed, setAgreed] = useState(false);
 
-  // Prevent scrolling when modal is open
-  useEffect(() => {
-    if (!agreed) {
-        document.body.style.overflow = 'hidden';
-    } else {
-        document.body.style.overflow = 'unset';
-    }
-  }, [agreed]);
+    // Prevent scrolling when modal is open
+    useEffect(() => {
+        if (!agreed) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+    }, [agreed]);
 
-  return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-indigo-500/30 relative flex flex-col overflow-x-hidden cursor-none">
-      
-      {/* Custom Cursor */}
-      <CustomCursor />
+    return (
+        <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-indigo-500/30 relative flex flex-col overflow-x-hidden cursor-none">
 
-      {/* Disclaimer Modal */}
-      <AnimatePresence>
-        {!agreed && <DisclaimerModal onAgree={() => setAgreed(true)} />}
-      </AnimatePresence>
+            {/* Custom Cursor */}
+            <CustomCursor />
 
-      {/* Electric Background */}
-      <ElectricBackground />
+            {/* Vercel Analytics */}
+            <Analytics />
 
-      {/* Ambient Background Layers */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-         <div className="absolute inset-0 ambient-aurora"></div>
-         <div className="absolute inset-0 interactive-glow"></div>
+            {/* Disclaimer Modal */}
+            <AnimatePresence>
+                {!agreed && <DisclaimerModal onAgree={() => setAgreed(true)} />}
+            </AnimatePresence>
 
-         {/* Deep ambient glow */}
-         <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-900/10 blur-[120px] ambient-orb orb-a"></div>
-         <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-purple-900/10 blur-[120px] ambient-orb orb-b"></div>
-         <div className="absolute top-[20%] right-[-15%] w-[35vw] h-[35vw] rounded-full bg-emerald-900/10 blur-[120px] ambient-orb orb-c hidden md:block"></div>
+            {/* Electric Background */}
+            <ElectricBackground />
 
-         <div className="absolute inset-0 vignette"></div>
-      </div>
+            {/* Ambient Background Layers */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <div className="absolute inset-0 ambient-aurora"></div>
+                <div className="absolute inset-0 interactive-glow"></div>
 
-      <main className={`flex-grow flex flex-col items-center justify-center px-6 py-20 relative z-10 w-full max-w-3xl mx-auto transition-all duration-700 ${!agreed ? 'blur-lg opacity-30 pointer-events-none' : 'blur-none opacity-100'}`}>
-        
-        {/* Hero Section */}
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-center w-full flex flex-col items-center"
-        >
-          {/* Badge */}
-          <div className="inline-flex items-center justify-center px-4 py-1.5 mb-8 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
-            <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse mr-2"></span>
-            <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] text-indigo-200/80 uppercase">Coming Soon</span>
-          </div>
+                {/* Deep ambient glow */}
+                <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-900/10 blur-[120px] ambient-orb orb-a"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-purple-900/10 blur-[120px] ambient-orb orb-b"></div>
+                <div className="absolute top-[20%] right-[-15%] w-[35vw] h-[35vw] rounded-full bg-emerald-900/10 blur-[120px] ambient-orb orb-c hidden md:block"></div>
 
-          {/* Interactive Particle Title */}
-          <div className="w-full max-w-2xl mb-12">
-             <ParticleModiText />
-          </div>
+                <div className="absolute inset-0 vignette"></div>
+            </div>
 
-          {/* Divider */}
-          <div className="w-16 h-[1px] bg-gradient-to-r from-transparent via-neutral-700 to-transparent mx-auto mb-12"></div>
+            <main className={`flex-grow flex flex-col items-center justify-center px-6 py-20 relative z-10 w-full max-w-3xl mx-auto transition-all duration-700 ${!agreed ? 'blur-lg opacity-30 pointer-events-none' : 'blur-none opacity-100'}`}>
 
-          {/* Short Message */}
-          <p className="text-neutral-400 text-sm md:text-base max-w-md mx-auto leading-relaxed mb-16">
-            Memes the internet made. <br className="hidden sm:block" />
-            No politics, no agenda.
-          </p>
+                {/* Hero Section */}
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className="text-center w-full flex flex-col items-center"
+                >
+                    {/* Badge */}
+                    <div className="inline-flex items-center justify-center px-4 py-1.5 mb-8 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+                        <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse mr-2"></span>
+                        <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] text-indigo-200/80 uppercase">Coming Soon</span>
+                    </div>
 
-        </motion.div>
+                    {/* Interactive Particle Title */}
+                    <div className="w-full max-w-2xl mb-12">
+                        <ParticleModiText />
+                    </div>
 
-        {/* Links Section */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="w-full max-w-sm"
-        >
-          <div className="flex items-center gap-4 mb-6">
-            <div className="h-[1px] flex-grow bg-white/10"></div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-600">Reach owner of modih.in</span>
-            <div className="h-[1px] flex-grow bg-white/10"></div>
-          </div>
+                    {/* Divider */}
+                    <div className="w-16 h-[1px] bg-gradient-to-r from-transparent via-neutral-700 to-transparent mx-auto mb-12"></div>
 
-          <div className="flex flex-col gap-4">
-            {/* Button 1: LinkedIn */}
-            <a 
-              href="https://www.linkedin.com/in/abhnv07/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative flex items-center justify-between px-6 py-4 bg-neutral-900/50 hover:bg-neutral-800 border border-white/10 hover:border-white/20 rounded-xl transition-all duration-300 overflow-hidden cursor-none"
-            >
-              <div className="flex items-center gap-3 relative z-10">
-                <div className="text-neutral-400 group-hover:text-white transition-colors">
-                    <LinkedInLogo />
+                    {/* Short Message */}
+                    <p className="text-neutral-400 text-sm md:text-base max-w-md mx-auto leading-relaxed mb-16">
+                        Memes the internet made. <br className="hidden sm:block" />
+                        No politics, no agenda.
+                    </p>
+
+                </motion.div>
+
+                {/* Links Section */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.2 }}
+                    className="w-full max-w-sm"
+                >
+                    <div className="flex items-center gap-4 mb-6">
+                        <div className="h-[1px] flex-grow bg-white/10"></div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-600">Reach owner of modih.in</span>
+                        <div className="h-[1px] flex-grow bg-white/10"></div>
+                    </div>
+
+                    <div className="flex flex-col gap-4">
+                        {/* Button 1: LinkedIn */}
+                        <a
+                            href="https://www.linkedin.com/in/abhnv07/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group relative flex items-center justify-between px-6 py-4 bg-neutral-900/50 hover:bg-neutral-800 border border-white/10 hover:border-white/20 rounded-xl transition-all duration-300 overflow-hidden cursor-none"
+                        >
+                            <div className="flex items-center gap-3 relative z-10">
+                                <div className="text-neutral-400 group-hover:text-white transition-colors">
+                                    <LinkedInLogo />
+                                </div>
+                                <span className="text-sm font-medium text-neutral-300 group-hover:text-white transition-colors">LinkedIn</span>
+                            </div>
+                            <ArrowRight size={16} className="text-neutral-600 group-hover:text-white group-hover:translate-x-1 transition-all" />
+
+                            {/* Hover Glow */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                        </a>
+
+                        {/* Button 2: Contact */}
+                        <a
+                            href="https://www.abhnv.in/contact"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group relative flex items-center justify-between px-6 py-4 bg-neutral-900/50 hover:bg-neutral-800 border border-white/10 hover:border-white/20 rounded-xl transition-all duration-300 overflow-hidden cursor-none"
+                        >
+                            <div className="flex items-center gap-3 relative z-10">
+                                <Mail size={20} className="text-neutral-400 group-hover:text-white transition-colors" />
+                                <span className="text-sm font-medium text-neutral-300 group-hover:text-white transition-colors">Contact</span>
+                            </div>
+                            <ArrowRight size={16} className="text-neutral-600 group-hover:text-white group-hover:translate-x-1 transition-all" />
+
+                            {/* Hover Glow */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                        </a>
+                    </div>
+                </motion.div>
+
+            </main>
+
+            {/* Footer / Disclaimer */}
+            <footer className={`relative z-10 py-10 px-6 border-t border-white/5 bg-black/40 backdrop-blur-sm transition-opacity duration-700 ${!agreed ? 'opacity-0' : 'opacity-100'}`}>
+                <div className="max-w-2xl mx-auto text-center">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-red-500 mb-3 flex items-center justify-center gap-2">
+                        <ShieldAlert size={14} /> Disclaimer
+                    </p>
+                    <p className="text-[12px] md:text-sm leading-relaxed text-white font-medium max-w-lg mx-auto bg-neutral-900/50 p-4 rounded-lg border border-white/10">
+                        This is an unofficial parody/meme website created purely for entertainment purposes.
+                        It is not affiliated with Narendra Modi, the Government of India, or any political party.
+                        All media belongs to their respective owners.
+                    </p>
                 </div>
-                <span className="text-sm font-medium text-neutral-300 group-hover:text-white transition-colors">LinkedIn</span>
-              </div>
-              <ArrowRight size={16} className="text-neutral-600 group-hover:text-white group-hover:translate-x-1 transition-all" />
-              
-              {/* Hover Glow */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-            </a>
+            </footer>
 
-            {/* Button 2: Contact */}
-            <a 
-              href="https://www.abhnv.in/contact"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative flex items-center justify-between px-6 py-4 bg-neutral-900/50 hover:bg-neutral-800 border border-white/10 hover:border-white/20 rounded-xl transition-all duration-300 overflow-hidden cursor-none"
-            >
-               <div className="flex items-center gap-3 relative z-10">
-                <Mail size={20} className="text-neutral-400 group-hover:text-white transition-colors" />
-                <span className="text-sm font-medium text-neutral-300 group-hover:text-white transition-colors">Contact</span>
-              </div>
-              <ArrowRight size={16} className="text-neutral-600 group-hover:text-white group-hover:translate-x-1 transition-all" />
-              
-              {/* Hover Glow */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-            </a>
-          </div>
-        </motion.div>
-
-      </main>
-
-      {/* Footer / Disclaimer */}
-      <footer className={`relative z-10 py-10 px-6 border-t border-white/5 bg-black/40 backdrop-blur-sm transition-opacity duration-700 ${!agreed ? 'opacity-0' : 'opacity-100'}`}>
-        <div className="max-w-2xl mx-auto text-center">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-red-500 mb-3 flex items-center justify-center gap-2">
-            <ShieldAlert size={14} /> Disclaimer
-          </p>
-          <p className="text-[12px] md:text-sm leading-relaxed text-white font-medium max-w-lg mx-auto bg-neutral-900/50 p-4 rounded-lg border border-white/10">
-            This is an unofficial parody/meme website created purely for entertainment purposes.
-            It is not affiliated with Narendra Modi, the Government of India, or any political party.
-            All media belongs to their respective owners.
-          </p>
         </div>
-      </footer>
-
-    </div>
-  );
+    );
 };
 
 export default App;
