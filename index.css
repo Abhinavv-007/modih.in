@@ -1,0 +1,87 @@
+:root {
+  --cursor-x: 50vw;
+  --cursor-y: 40vh;
+  --cursor-active: 0;
+}
+
+.ambient-aurora {
+  background:
+    radial-gradient(60% 60% at 15% 20%, rgba(79, 70, 229, 0.25), transparent 60%),
+    radial-gradient(55% 55% at 85% 15%, rgba(168, 85, 247, 0.2), transparent 60%),
+    radial-gradient(50% 50% at 70% 80%, rgba(16, 185, 129, 0.15), transparent 65%);
+  filter: blur(60px);
+  opacity: 0.65;
+  animation: auroraShift 22s ease-in-out infinite;
+}
+
+.ambient-orb {
+  opacity: 0.5;
+  animation: floatOrb 18s ease-in-out infinite;
+  will-change: transform;
+}
+
+.ambient-orb.orb-a {
+  animation-duration: 20s;
+}
+
+.ambient-orb.orb-b {
+  animation-duration: 24s;
+  animation-delay: -6s;
+}
+
+.ambient-orb.orb-c {
+  animation-duration: 26s;
+  animation-delay: -10s;
+}
+
+.interactive-glow {
+  background: radial-gradient(
+    600px circle at var(--cursor-x) var(--cursor-y),
+    rgba(99, 102, 241, 0.2),
+    transparent 60%
+  );
+  mix-blend-mode: screen;
+  opacity: calc(0.35 + 0.45 * var(--cursor-active));
+  transition: opacity 0.4s ease;
+  will-change: background;
+}
+
+.vignette {
+  background: radial-gradient(120% 80% at 50% 20%, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.35) 100%);
+  opacity: 0.9;
+}
+
+@keyframes auroraShift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-4%, 6%, 0) scale(1.05);
+  }
+  100% {
+    transform: translate3d(3%, -4%, 0) scale(1);
+  }
+}
+
+@keyframes floatOrb {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(4%, -3%, 0) scale(1.08);
+  }
+  100% {
+    transform: translate3d(-3%, 4%, 0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-aurora,
+  .ambient-orb {
+    animation: none;
+  }
+
+  .interactive-glow {
+    transition: none;
+  }
+}

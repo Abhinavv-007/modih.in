@@ -20,38 +20,93 @@ const LinkedInLogo = ({ className = "" }: { className?: string }) => (
 const CustomCursor = () => {
     const cursorRef = useRef<HTMLDivElement>(null);
     const trailerRef = useRef<HTMLDivElement>(null);
+    const rafRef = useRef<number | null>(null);
+    const targetRef = useRef({ x: 0, y: 0 });
+    const trailerPosRef = useRef({ x: 0, y: 0 });
+    const [enabled, setEnabled] = useState(false);
 
     useEffect(() => {
+        const finePointer = window.matchMedia('(pointer: fine)');
+
+        const update = () => setEnabled(finePointer.matches);
+        update();
+
+        finePointer.addEventListener('change', update);
+        return () => {
+            finePointer.removeEventListener('change', update);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!enabled) return;
+
         const cursor = cursorRef.current;
         const trailer = trailerRef.current;
-        
-        const moveCursor = (e: MouseEvent) => {
-            if (cursor && trailer) {
-                const { clientX, clientY } = e;
-                
-                // Main dot follows instantly
-                cursor.style.transform = `translate3d(${clientX}px, ${clientY}px, 0)`;
-                
-                // Trailer follows with delay via CSS transition or simple logic (using WAAPI for performance here)
-                trailer.animate({
-                    transform: `translate3d(${clientX - 10}px, ${clientY - 10}px, 0)`
-                }, {
-                    duration: 500,
-                    fill: "forwards"
-                });
+        const root = document.documentElement;
+        let isActive = false;
+
+        const animate = () => {
+            const { x, y } = targetRef.current;
+            const trailerPos = trailerPosRef.current;
+
+            trailerPos.x += (x - trailerPos.x) * 0.18;
+            trailerPos.y += (y - trailerPos.y) * 0.18;
+
+            if (cursor) {
+                cursor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+            }
+            if (trailer) {
+                trailer.style.transform = `translate3d(${trailerPos.x - 12}px, ${trailerPos.y - 12}px, 0)`;
+            }
+
+            root.style.setProperty('--cursor-x', `${x}px`);
+            root.style.setProperty('--cursor-y', `${y}px`);
+            root.style.setProperty('--cursor-active', isActive ? '1' : '0');
+
+            const distance = Math.abs(x - trailerPos.x) + Math.abs(y - trailerPos.y);
+            if (distance < 0.2) {
+                rafRef.current = null;
+                return;
+            }
+
+            rafRef.current = requestAnimationFrame(animate);
+        };
+
+        const handleMove = (e: PointerEvent) => {
+            isActive = true;
+            targetRef.current = { x: e.clientX, y: e.clientY };
+            if (!rafRef.current) {
+                rafRef.current = requestAnimationFrame(animate);
             }
         };
 
-        window.addEventListener('mousemove', moveCursor);
-        
-        // Hide default cursor
+        const handleLeave = () => {
+            isActive = false;
+            targetRef.current = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+            if (!rafRef.current) {
+                rafRef.current = requestAnimationFrame(animate);
+            }
+        };
+
+        window.addEventListener('pointermove', handleMove, { passive: true });
+        window.addEventListener('pointerdown', handleMove, { passive: true });
+        document.addEventListener('mouseleave', handleLeave);
+
         document.body.style.cursor = 'none';
 
         return () => {
-            window.removeEventListener('mousemove', moveCursor);
+            window.removeEventListener('pointermove', handleMove);
+            window.removeEventListener('pointerdown', handleMove);
+            document.removeEventListener('mouseleave', handleLeave);
+            if (rafRef.current) cancelAnimationFrame(rafRef.current);
             document.body.style.cursor = 'auto';
+            root.style.removeProperty('--cursor-x');
+            root.style.removeProperty('--cursor-y');
+            root.style.removeProperty('--cursor-active');
         };
-    }, []);
+    }, [enabled]);
+
+    if (!enabled) return null;
 
     return (
         <div className="pointer-events-none fixed inset-0 z-[100] mix-blend-difference overflow-hidden">
@@ -80,75 +135,167 @@ const ElectricBackground = () => {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        let width = window.innerWidth;
-        let height = window.innerHeight;
-        let particles: { x: number; y: number; vx: number; vy: number }[] = [];
-        
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        let width = 0;
+        let height = 0;
+        let dpr = 1;
+        let animationFrameId = 0;
+        let particles: { x: number; y: number; vx: number; vy: number; size: number }[] = [];
+        const mouse = { x: 0, y: 0, vx: 0, vy: 0, active: false };
+        let prevMouse = { x: 0, y: 0 };
+        const maxDist = 150;
+        const maxDistSq = maxDist * maxDist;
+        const cellSize = 160;
+
         const resize = () => {
             width = window.innerWidth;
             height = window.innerHeight;
-            canvas.width = width;
-            canvas.height = height;
+            dpr = Math.min(window.devicePixelRatio || 1, 2);
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = `${width}px`;
+            canvas.style.height = `${height}px`;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             initParticles();
         };
 
         const initParticles = () => {
             particles = [];
-            const count = Math.min(Math.floor((width * height) / 15000), 100); // Density control
+            const density = prefersReducedMotion ? 26000 : 18000;
+            const maxCount = prefersReducedMotion ? 70 : 120;
+            const count = Math.min(Math.floor((width * height) / density), maxCount);
             for (let i = 0; i < count; i++) {
                 particles.push({
                     x: Math.random() * width,
                     y: Math.random() * height,
-                    vx: (Math.random() - 0.5) * 0.5,
-                    vy: (Math.random() - 0.5) * 0.5,
+                    vx: (Math.random() - 0.5) * 0.4,
+                    vy: (Math.random() - 0.5) * 0.4,
+                    size: Math.random() * 1.2 + 0.4,
                 });
             }
         };
 
-        const animate = () => {
+        const drawFrame = () => {
             ctx.clearRect(0, 0, width, height);
             ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-            
-            // Move and Draw Particles
-            particles.forEach((p, i) => {
-                p.x += p.vx;
-                p.y += p.vy;
+            ctx.lineWidth = 1;
 
-                // Bounce off edges
-                if (p.x < 0 || p.x > width) p.vx *= -1;
-                if (p.y < 0 || p.y > height) p.vy *= -1;
+            const grid = new Map<string, number[]>();
 
-                // Draw dot
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
-                ctx.fill();
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
 
-                // Electric connections
-                for (let j = i + 1; j < particles.length; j++) {
-                    const p2 = particles[j];
-                    const dx = p.x - p2.x;
-                    const dy = p.y - p2.y;
-                    const dist = Math.sqrt(dx*dx + dy*dy);
-
-                    if (dist < 150) {
-                        ctx.beginPath();
-                        ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 * (1 - dist / 150)})`;
-                        ctx.lineWidth = 1;
-                        ctx.moveTo(p.x, p.y);
-                        ctx.lineTo(p2.x, p2.y);
-                        ctx.stroke();
+                if (mouse.active) {
+                    const dx = p.x - mouse.x;
+                    const dy = p.y - mouse.y;
+                    const distSq = dx * dx + dy * dy;
+                    const radius = 220;
+                    const radiusSq = radius * radius;
+                    if (distSq < radiusSq) {
+                        const dist = Math.sqrt(distSq) || 1;
+                        const force = (1 - dist / radius) * 0.08;
+                        p.vx += (dx / dist) * force + mouse.vx * 0.0015;
+                        p.vy += (dy / dist) * force + mouse.vy * 0.0015;
                     }
                 }
-            });
 
-            requestAnimationFrame(animate);
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vx *= 0.985;
+                p.vy *= 0.985;
+
+                // Bounce off edges
+                if (p.x < 0 || p.x > width) {
+                    p.vx *= -1;
+                    p.x = Math.max(0, Math.min(width, p.x));
+                }
+                if (p.y < 0 || p.y > height) {
+                    p.vy *= -1;
+                    p.y = Math.max(0, Math.min(height, p.y));
+                }
+
+                const cellX = Math.floor(p.x / cellSize);
+                const cellY = Math.floor(p.y / cellSize);
+                const key = `${cellX},${cellY}`;
+                const bucket = grid.get(key);
+                if (bucket) {
+                    bucket.push(i);
+                } else {
+                    grid.set(key, [i]);
+                }
+            }
+
+            // Draw dots + connections
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                const cellX = Math.floor(p.x / cellSize);
+                const cellY = Math.floor(p.y / cellSize);
+                for (let gx = -1; gx <= 1; gx++) {
+                    for (let gy = -1; gy <= 1; gy++) {
+                        const key = `${cellX + gx},${cellY + gy}`;
+                        const bucket = grid.get(key);
+                        if (!bucket) continue;
+                        for (const j of bucket) {
+                            if (j <= i) continue;
+                            const p2 = particles[j];
+                            const dx = p.x - p2.x;
+                            const dy = p.y - p2.y;
+                            const distSq = dx * dx + dy * dy;
+                            if (distSq < maxDistSq) {
+                                const dist = Math.sqrt(distSq);
+                                const alpha = 0.12 * (1 - dist / maxDist);
+                                ctx.beginPath();
+                                ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+                                ctx.moveTo(p.x, p.y);
+                                ctx.lineTo(p2.x, p2.y);
+                                ctx.stroke();
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        const animate = () => {
+            drawFrame();
+            animationFrameId = requestAnimationFrame(animate);
         };
 
         window.addEventListener('resize', resize);
+        const handlePointer = (e: PointerEvent) => {
+            mouse.active = true;
+            mouse.vx = e.clientX - prevMouse.x;
+            mouse.vy = e.clientY - prevMouse.y;
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+            prevMouse = { x: e.clientX, y: e.clientY };
+        };
+        const handlePointerLeave = () => {
+            mouse.active = false;
+            mouse.vx = 0;
+            mouse.vy = 0;
+        };
+        window.addEventListener('pointermove', handlePointer, { passive: true });
+        window.addEventListener('pointerdown', handlePointer, { passive: true });
+        document.addEventListener('mouseleave', handlePointerLeave);
         resize();
-        animate();
+        if (prefersReducedMotion) {
+            drawFrame();
+        } else {
+            animate();
+        }
 
-        return () => window.removeEventListener('resize', resize);
+        return () => {
+            window.removeEventListener('resize', resize);
+            window.removeEventListener('pointermove', handlePointer);
+            window.removeEventListener('pointerdown', handlePointer);
+            document.removeEventListener('mouseleave', handlePointerLeave);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        };
     }, []);
 
     return <canvas ref={canvasRef} className="fixed inset-0 z-0 opacity-40 pointer-events-none" />;
@@ -192,6 +339,7 @@ const ParticleModiText = () => {
             canvas.height = height * dpr;
             canvas.style.width = `${width}px`;
             canvas.style.height = `${height}px`;
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
             ctx.scale(dpr, dpr);
 
             // Create text mask
@@ -406,11 +554,17 @@ const App: React.FC = () => {
       {/* Electric Background */}
       <ElectricBackground />
 
-      {/* Static Background Gradients */}
+      {/* Ambient Background Layers */}
       <div className="fixed inset-0 z-0 pointer-events-none">
+         <div className="absolute inset-0 ambient-aurora"></div>
+         <div className="absolute inset-0 interactive-glow"></div>
+
          {/* Deep ambient glow */}
-         <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-900/10 blur-[120px]"></div>
-         <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-purple-900/10 blur-[120px]"></div>
+         <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-900/10 blur-[120px] ambient-orb orb-a"></div>
+         <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-purple-900/10 blur-[120px] ambient-orb orb-b"></div>
+         <div className="absolute top-[20%] right-[-15%] w-[35vw] h-[35vw] rounded-full bg-emerald-900/10 blur-[120px] ambient-orb orb-c hidden md:block"></div>
+
+         <div className="absolute inset-0 vignette"></div>
       </div>
 
       <main className={`flex-grow flex flex-col items-center justify-center px-6 py-20 relative z-10 w-full max-w-3xl mx-auto transition-all duration-700 ${!agreed ? 'blur-lg opacity-30 pointer-events-none' : 'blur-none opacity-100'}`}>
