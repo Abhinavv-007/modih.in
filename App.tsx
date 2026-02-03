@@ -24,25 +24,28 @@ const CustomCursor = () => {
     useEffect(() => {
         const cursor = cursorRef.current;
         const trailer = trailerRef.current;
-        
+        if (!cursor || !trailer) return;
+
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (prefersReducedMotion) return;
+
+        let mouseX = -100;
+        let mouseY = -100;
+        let rafId = 0;
+
+        const animate = () => {
+            cursor.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0)`;
+            trailer.style.transform = `translate3d(${mouseX - 10}px, ${mouseY - 10}px, 0)`;
+            rafId = window.requestAnimationFrame(animate);
+        };
+
         const moveCursor = (e: MouseEvent) => {
-            if (cursor && trailer) {
-                const { clientX, clientY } = e;
-                
-                // Main dot follows instantly
-                cursor.style.transform = `translate3d(${clientX}px, ${clientY}px, 0)`;
-                
-                // Trailer follows with delay via CSS transition or simple logic (using WAAPI for performance here)
-                trailer.animate({
-                    transform: `translate3d(${clientX - 10}px, ${clientY - 10}px, 0)`
-                }, {
-                    duration: 500,
-                    fill: "forwards"
-                });
-            }
+            mouseX = e.clientX;
+            mouseY = e.clientY;
         };
 
         window.addEventListener('mousemove', moveCursor);
+        animate();
         
         // Hide default cursor
         document.body.style.cursor = 'none';
@@ -50,6 +53,7 @@ const CustomCursor = () => {
         return () => {
             window.removeEventListener('mousemove', moveCursor);
             document.body.style.cursor = 'auto';
+            window.cancelAnimationFrame(rafId);
         };
     }, []);
 
@@ -82,7 +86,10 @@ const ElectricBackground = () => {
 
         let width = window.innerWidth;
         let height = window.innerHeight;
+        let animationFrameId = 0;
         let particles: { x: number; y: number; vx: number; vy: number }[] = [];
+        const mouse = { x: width / 2, y: height / 2 };
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         
         const resize = () => {
             width = window.innerWidth;
@@ -94,7 +101,9 @@ const ElectricBackground = () => {
 
         const initParticles = () => {
             particles = [];
-            const count = Math.min(Math.floor((width * height) / 15000), 100); // Density control
+            const count = prefersReducedMotion
+                ? Math.min(Math.floor((width * height) / 30000), 60)
+                : Math.min(Math.floor((width * height) / 15000), 120); // Density control
             for (let i = 0; i < count; i++) {
                 particles.push({
                     x: Math.random() * width,
@@ -113,6 +122,15 @@ const ElectricBackground = () => {
             particles.forEach((p, i) => {
                 p.x += p.vx;
                 p.y += p.vy;
+
+                const dxMouse = p.x - mouse.x;
+                const dyMouse = p.y - mouse.y;
+                const distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
+                if (distMouse < 140 && distMouse > 0 && !prefersReducedMotion) {
+                    const push = (140 - distMouse) / 140;
+                    p.vx += (dxMouse / distMouse) * push * 0.3;
+                    p.vy += (dyMouse / distMouse) * push * 0.3;
+                }
 
                 // Bounce off edges
                 if (p.x < 0 || p.x > width) p.vx *= -1;
@@ -141,14 +159,24 @@ const ElectricBackground = () => {
                 }
             });
 
-            requestAnimationFrame(animate);
+            animationFrameId = requestAnimationFrame(animate);
+        };
+
+        const handleMouseMove = (event: MouseEvent) => {
+            mouse.x = event.clientX;
+            mouse.y = event.clientY;
         };
 
         window.addEventListener('resize', resize);
+        window.addEventListener('mousemove', handleMouseMove);
         resize();
         animate();
 
-        return () => window.removeEventListener('resize', resize);
+        return () => {
+            window.removeEventListener('resize', resize);
+            window.removeEventListener('mousemove', handleMouseMove);
+            cancelAnimationFrame(animationFrameId);
+        };
     }, []);
 
     return <canvas ref={canvasRef} className="fixed inset-0 z-0 opacity-40 pointer-events-none" />;
@@ -192,7 +220,7 @@ const ParticleModiText = () => {
             canvas.height = height * dpr;
             canvas.style.width = `${width}px`;
             canvas.style.height = `${height}px`;
-            ctx.scale(dpr, dpr);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
             // Create text mask
             const fontSize = Math.min(width * 0.22, 180);
@@ -324,6 +352,40 @@ const ParticleModiText = () => {
     );
 };
 
+const InteractiveGlow = () => {
+    useEffect(() => {
+        const root = document.documentElement;
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (prefersReducedMotion) return;
+        let rafId = 0;
+        let nextX = 50;
+        let nextY = 50;
+
+        const update = () => {
+            root.style.setProperty('--glow-x', `${nextX}%`);
+            root.style.setProperty('--glow-y', `${nextY}%`);
+            rafId = requestAnimationFrame(update);
+        };
+
+        const handleMove = (event: MouseEvent) => {
+            const x = (event.clientX / window.innerWidth) * 100;
+            const y = (event.clientY / window.innerHeight) * 100;
+            nextX = Math.max(0, Math.min(100, x));
+            nextY = Math.max(0, Math.min(100, y));
+        };
+
+        window.addEventListener('mousemove', handleMove);
+        update();
+
+        return () => {
+            window.removeEventListener('mousemove', handleMove);
+            cancelAnimationFrame(rafId);
+        };
+    }, []);
+
+    return <div className="fixed inset-0 z-0 pointer-events-none interactive-glow" />;
+};
+
 // --- Modal Component ---
 
 const DisclaimerModal = ({ onAgree }: { onAgree: () => void }) => {
@@ -409,9 +471,11 @@ const App: React.FC = () => {
       {/* Static Background Gradients */}
       <div className="fixed inset-0 z-0 pointer-events-none">
          {/* Deep ambient glow */}
-         <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-900/10 blur-[120px]"></div>
-         <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-purple-900/10 blur-[120px]"></div>
+         <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-900/10 blur-[120px] floating-orb"></div>
+         <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-purple-900/10 blur-[120px] floating-orb floating-orb-delay"></div>
       </div>
+
+      <InteractiveGlow />
 
       <main className={`flex-grow flex flex-col items-center justify-center px-6 py-20 relative z-10 w-full max-w-3xl mx-auto transition-all duration-700 ${!agreed ? 'blur-lg opacity-30 pointer-events-none' : 'blur-none opacity-100'}`}>
         

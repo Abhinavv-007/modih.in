@@ -1,0 +1,41 @@
+:root {
+  --glow-x: 50%;
+  --glow-y: 50%;
+}
+
+body {
+  background-color: #050505;
+}
+
+.interactive-glow {
+  background: radial-gradient(600px circle at var(--glow-x) var(--glow-y), rgba(99, 102, 241, 0.18), transparent 60%);
+  animation: glowPulse 12s ease-in-out infinite;
+}
+
+.floating-orb {
+  animation: orbFloat 16s ease-in-out infinite;
+}
+
+.floating-orb-delay {
+  animation-delay: -6s;
+}
+
+@keyframes glowPulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
+
+@keyframes orbFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(6%, -4%, 0) scale(1.05);
+  }
+}
