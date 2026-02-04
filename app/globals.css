@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-paper text-ink font-sans;
+}
+
+::selection {
+  background: rgba(242, 106, 46, 0.35);
+}
+
+.reel-scroll {
+  scroll-snap-type: y mandatory;
+}
+
+.reel-item {
+  scroll-snap-align: start;
+}
